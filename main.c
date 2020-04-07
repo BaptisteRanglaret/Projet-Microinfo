@@ -26,7 +26,7 @@
 #include <arm_math.h>
 //#include <goal.h>
 
-messagebus_t bus; /////////////////////////////////////
+messagebus_t bus;
 MUTEX_DECL(bus_lock);
 CONDVAR_DECL(bus_condvar);
 
@@ -83,7 +83,7 @@ int main(void)
     dcmi_start();
 	po8030_start();
 	//inits the motors
-	//motors_init();
+	motors_init();
 
 	messagebus_init(&bus, &bus_lock, &bus_condvar);
 	//starts sensors
@@ -99,6 +99,8 @@ int main(void)
     		//waits 1 second
         chThdSleepMilliseconds(1000);
         chprintf((BaseSequentialStream *)&SDU1, "Valeur du capteur 4 =%d \n",get_calibrated_prox(3));
+        left_motor_set_speed(1000);
+        right_motor_set_speed(-1000);
     }
 }
 
