@@ -19,11 +19,17 @@ extern "C" {
 #define PXTOCM					1570.0f //experimental value
 #define GOAL_VALUE				300.0f
 #define MAX_DISTANCE 			25.0f
-#define ERROR_THRESHOLD			0.1f	//[cm] because of the noise of the camera
-#define KP						0.5f
-#define KI 						0.0005f	//must not be zero
-#define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI)
-#define SPEED					1000
+#define ERROR_THRESHOLD			100.0f	// experimental value
+#define KP						0.3f
+#define KP_PROCHE				0.1f
+#define KP_LOIN					0.8f
+#define KI 						0.005f	//must not be zero
+#define KD						1.0f
+#define KD_PROCHE				0.1f
+#define KD_LOIN					1.0f
+#define MAX_SUM_ERROR 			2000.0f
+#define MAX_ERROR_DIFF			250.0f
+#define SPEED					700  // default step/s
 
 /** Robot wide IPC bus. */
 extern messagebus_t bus;

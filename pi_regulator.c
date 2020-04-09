@@ -18,31 +18,56 @@ int16_t pi_regulator(float distance, float goal){
 	float speed_correction = 0;
 
 	static float sum_error = 0;
+	static float error_prec=0;
 
 	error = distance - goal;
+
+	float error_diff = (error-error_prec);
 
 
 
 	//disables the PI regulator if the error is to small
 	//this avoids to always move as we cannot exactly be where we want and 
 	//the camera is a bit noisy
-	if(fabs(error) < ERROR_THRESHOLD){
+	if(fabs(error) < ERROR_THRESHOLD)
+	{
 		return 0;
 	}
 
 	sum_error += error;
 
 	//we set a maximum and a minimum for the sum to avoid an uncontrolled growth
+	// COMPRENDRE CE QU'IL SE PASSE SI OVERFLOW
 	if(sum_error > MAX_SUM_ERROR){
 		sum_error = MAX_SUM_ERROR;
 	}else if(sum_error < -MAX_SUM_ERROR){
 		sum_error = -MAX_SUM_ERROR;
 	}
 
-	speed_correction = KP * error + KI * sum_error;
+
+	if(error_diff> MAX_ERROR_DIFF)
+	{
+		error_diff = MAX_ERROR_DIFF;
+	}
+	else if(error_diff < -MAX_ERROR_DIFF)
+	{
+		error_diff = -MAX_ERROR_DIFF;
+	}
+
+
+	if(fabs(error)> 300)
+	{
+		speed_correction = KP_PROCHE * error + KD_PROCHE* error_diff + KI * sum_error;
+	}
+	else
+	{
+		speed_correction = KP_LOIN * error + KD_LOIN* error_diff + KI * sum_error;
+	}
+
 	//chprintf((BaseSequentialStream *)&SDU1, "KP*ERROR = %f\n",KP*error);
 	//chprintf((BaseSequentialStream *)&SDU1, "KI*SUM_ERROR = %f\n",KI*sum_error);
 	//chThdSleepMilliseconds(1000);
+	error_prec = error;
     return (int16_t)speed_correction;
 }
 
@@ -57,7 +82,7 @@ static THD_FUNCTION(PiRegulator, arg) {
     int16_t speed_correction = 0;
 
     while(1){
-        time = chVTGetSystemTime();
+        //time = chVTGetSystemTime();
         
         //computes the speed to give to the motors
         //distance_cm is modified by the image processing thread
@@ -71,11 +96,11 @@ static THD_FUNCTION(PiRegulator, arg) {
         }*/
 
         //applies the speed from the PI regulator and the correction for the rotation
-		right_motor_set_speed(SPEED + ROTATION_COEFF * speed_correction);
-		left_motor_set_speed(SPEED - ROTATION_COEFF * speed_correction);
+		right_motor_set_speed(SPEED + speed_correction);
+		left_motor_set_speed(SPEED - speed_correction);
 
         //100Hz
-        chThdSleepUntilWindowed(time, time + MS2ST(10));
+        //chThdSleepUntilWindowed(time, time + MS2ST(10));
     }
 }
 
