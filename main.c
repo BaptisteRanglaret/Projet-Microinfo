@@ -98,7 +98,7 @@ int main(void)
     {
     		//waits 1 second
         chThdSleepMilliseconds(1000);
-        //chprintf((BaseSequentialStream *)&SDU1, "Valeur du capteur 4 =%d \n",get_calibrated_prox(2));
+        chprintf((BaseSequentialStream *)&SDU1, "Valeur du capteur 4 =%d \n",get_calibrated_prox(2));
         //left_motor_set_speed(1000);
         //right_motor_set_speed(-1000);
     }

@@ -3,7 +3,7 @@
 #include <math.h>
 #include <usbcfg.h>
 #include <chprintf.h>
-
+#include <arm_math.h>
 
 #include <main.h>
 #include <motors.h>
@@ -54,7 +54,16 @@ int16_t pi_regulator(float distance, float goal){
 		error_diff = -MAX_ERROR_DIFF;
 	}
 
+	if(error> MAX_ERROR)
+		{
+			error = MAX_ERROR;
+		}
+		else if(error < -MAX_ERROR)
+		{
+			error= -MAX_ERROR;
+		}
 
+	// On met deux Kp pour contrer la non-linéarité des valeurs de l'erreur
 	if(fabs(error)> 300)
 	{
 		speed_correction = KP_PROCHE * error + KD_PROCHE* error_diff + KI * sum_error;
@@ -63,6 +72,7 @@ int16_t pi_regulator(float distance, float goal){
 	{
 		speed_correction = KP_LOIN * error + KD_LOIN* error_diff + KI * sum_error;
 	}
+
 
 	//chprintf((BaseSequentialStream *)&SDU1, "KP*ERROR = %f\n",KP*error);
 	//chprintf((BaseSequentialStream *)&SDU1, "KI*SUM_ERROR = %f\n",KI*sum_error);
@@ -82,11 +92,16 @@ static THD_FUNCTION(PiRegulator, arg) {
     int16_t speed_correction = 0;
 
     while(1){
-        //time = chVTGetSystemTime();
+        time = chVTGetSystemTime();
         
+
+        float distance = convertisseur_value_dist(get_calibrated_prox(2));
+
+        chprintf((BaseSequentialStream *)&SDU1, "DISTANCE = %f\n",distance);
+
         //computes the speed to give to the motors
         //distance_cm is modified by the image processing thread
-        speed_correction = pi_regulator((float)get_calibrated_prox(2), GOAL_VALUE);
+        speed_correction = pi_regulator(distance, GOAL_VALUE);
         //computes a correction factor to let the robot rotate to be in front of the line
         //speed_correction = (get_line_position() - (IMAGE_BUFFER_SIZE/2));
 
@@ -100,8 +115,23 @@ static THD_FUNCTION(PiRegulator, arg) {
 		left_motor_set_speed(SPEED - speed_correction);
 
         //100Hz
-        //chThdSleepUntilWindowed(time, time + MS2ST(10));
+        chThdSleepUntilWindowed(time, time + MS2ST(10));
     }
+}
+
+
+// ATTENTION AUX MAGIC NUMBERS, faire une macro svp
+float convertisseur_value_dist(float value)
+{
+	if (value>120)
+	{
+		float distance=6*log((13760/(value-120))-2);
+		return distance;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 void pi_regulator_start(void){
