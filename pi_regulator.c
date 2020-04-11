@@ -95,27 +95,32 @@ static THD_FUNCTION(PiRegulator, arg) {
         time = chVTGetSystemTime();
         
 
-        float distance = convertisseur_value_dist(get_calibrated_prox(2));
+        float dist1 = convertisseur_value_dist(get_calibrated_prox(2));
+        float dist2 = convertisseur_value_dist(get_calibrated_prox(1));
+        float dist3 = convertisseur_value_dist(get_calibrated_prox(3));
 
-        chprintf((BaseSequentialStream *)&SDU1, "DISTANCE = %f\n",distance);
+        chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 3 = %f\n",dist1);
+        chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 2 = %f\n",dist2);
+        chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 4 = %f\n",dist3);
+
+
+        //vector implementation
+        ////////////////////////////////////////////////////////////////////
+
+        //Angle calculation
+        ////////////////////////////////////////////////////////////////////
 
         //computes the speed to give to the motors
-        //distance_cm is modified by the image processing thread
-        speed_correction = pi_regulator(distance, GOAL_VALUE);
-        //computes a correction factor to let the robot rotate to be in front of the line
-        //speed_correction = (get_line_position() - (IMAGE_BUFFER_SIZE/2));
+        //The angle is determined above
+        //speed_correction = pi_regulator(dist1, GOAL_VALUE); //changer dist en angle
 
-        //if the line is nearly in front of the camera, don't rotate
-        /*if(abs(speed_correction) < ROTATION_THRESHOLD){
-        	speed_correction = 0;
-        }*/
 
-        //applies the speed from the PI regulator and the correction for the rotation
-		right_motor_set_speed(SPEED + speed_correction);
-		left_motor_set_speed(SPEED - speed_correction);
+        //applies the speed from the PID regulator
+		//right_motor_set_speed(SPEED + speed_correction);
+		//left_motor_set_speed(SPEED - speed_correction);
 
         //100Hz
-        chThdSleepUntilWindowed(time, time + MS2ST(10));
+        chThdSleepUntilWindowed(time, time + MS2ST(1000));
     }
 }
 
