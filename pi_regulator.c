@@ -11,6 +11,8 @@
 //#include <process_image.h>
 #include <sensors/proximity.h>
 
+float calcul_angle (float dist1, float dist2, float dist_capt);
+
 //simple PI regulator implementation
 int16_t pi_regulator(float distance, float goal){
 
@@ -66,11 +68,11 @@ int16_t pi_regulator(float distance, float goal){
 	// On met deux Kp pour contrer la non-linéarité des valeurs de l'erreur
 	if(fabs(error)> 300)
 	{
-		speed_correction = KP_PROCHE * error + KD_PROCHE* error_diff + KI * sum_error;
+		speed_correction = KP * error + KD* error_diff + KI * sum_error;
 	}
 	else
 	{
-		speed_correction = KP_LOIN * error + KD_LOIN* error_diff + KI * sum_error;
+		speed_correction = KP * error + KD* error_diff + KI * sum_error;
 	}
 
 
@@ -90,29 +92,42 @@ static THD_FUNCTION(PiRegulator, arg) {
     systime_t time;
 
     int16_t speed_correction = 0;
+    float angle=0;
 
     while(1){
         time = chVTGetSystemTime();
         
 
-        float dist1 = convertisseur_value_dist(get_calibrated_prox(2));
+        float dist3 = convertisseur_value_dist(get_calibrated_prox(2));
         float dist2 = convertisseur_value_dist(get_calibrated_prox(1));
-        float dist3 = convertisseur_value_dist(get_calibrated_prox(3));
+        float dist4 = convertisseur_value_dist(get_calibrated_prox(3));
 
-        chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 3 = %f\n",dist1);
-        chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 2 = %f\n",dist2);
-        chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 4 = %f\n",dist3);
+        //chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 3 = %f\n",dist3);
+        //chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 2 = %f\n",dist2);
+        //chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 4 = %f\n",dist4);
 
+        if((dist4 == 0) || (dist4!=0 && dist2!=0))
+        {
+        		//Angle calculation
+        		angle = calcul_angle(dist3, dist2, DIST_CAPT1);
+        }
+        else if(dist2 == 0)
+        {
+        		//Angle calculation
+        		angle = calcul_angle(dist4, dist3, DIST_CAPT2);
+        }
+        else
+        {
+        		angle = 0;
+        		// faire un truc pour qu'il tourne en rond ou cherche le mur ?
+        }
 
-        //vector implementation
-        ////////////////////////////////////////////////////////////////////
-
-        //Angle calculation
-        ////////////////////////////////////////////////////////////////////
+        chprintf((BaseSequentialStream *)&SDU1, "Angle = %f\n",angle);
+        chprintf((BaseSequentialStream *)&SDU1, "Diff angle = %f\n",angle-GOAL_ANGLE);
 
         //computes the speed to give to the motors
         //The angle is determined above
-        //speed_correction = pi_regulator(dist1, GOAL_VALUE); //changer dist en angle
+        //speed_correction = pi_regulator(angle, GOAL_ANGLE);
 
 
         //applies the speed from the PID regulator
@@ -128,7 +143,7 @@ static THD_FUNCTION(PiRegulator, arg) {
 // ATTENTION AUX MAGIC NUMBERS, faire une macro svp
 float convertisseur_value_dist(float value)
 {
-	if (value>120)
+	if (value>124)
 	{
 		float distance=6*log((13760/(value-120))-2);
 		return distance;
@@ -137,6 +152,28 @@ float convertisseur_value_dist(float value)
 	{
 		return 0;
 	}
+}
+
+float calcul_angle (float dist1, float dist2, float dist_capt)
+{
+	double x,y,alpha, l1 =0; //initializes local variables
+
+	if(dist_capt == DIST_CAPT1) // if we work with IR2 and IR3
+	{
+		alpha = atan(((dist2+50)-(dist1+70))/dist_capt);
+		l1 = 70 + dist1;
+	}
+	else // if we work with IR3 and IR4
+	{
+		alpha = atan(((dist2+70)-(dist1+25))/dist_capt);
+		l1 = 25 + dist1;
+	}
+
+	x= dist_capt*cos(alpha);
+	y=l1*cos(alpha) + dist_capt*sin(alpha);		//creates 2 coordinates of a vector
+
+	float angle= (180/M_PI)*atan(y/x);				// computes the angle of this vector to the wall
+	return angle;
 }
 
 void pi_regulator_start(void){
