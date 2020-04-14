@@ -89,17 +89,21 @@ int main(void)
 	//starts sensors
 	proximity_start();
 
+	depassement_start();
+
 	//stars the threads for the pi regulator and the processing of the image
-	pi_regulator_start();
+	//pi_regulator_start();
 	//process_image_start();
 
     /* Infinite loop. */
     while (1)
     {
-    		//waits 1 second
+
+
+        left_motor_set_speed(1000);
+        right_motor_set_speed(-1000);
+
         chThdSleepMilliseconds(1000);
-        //left_motor_set_speed(1000);
-        //right_motor_set_speed(-1000);
     }
 }
 

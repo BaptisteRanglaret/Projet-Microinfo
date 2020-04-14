@@ -11,9 +11,9 @@
 //#include <process_image.h>
 #include <sensors/proximity.h>
 
-float calcul_angle (float dist1, float dist2, float dist_capt);
+float calcul_angle (float dist1, float dist2, float dist_capt, bool var);
 
-//simple PI regulator implementation
+//simple PID regulator implementation
 int16_t pi_regulator(float distance, float goal){
 
 	float error = 0;
@@ -91,8 +91,8 @@ static THD_FUNCTION(PiRegulator, arg) {
 
     systime_t time;
 
-    int16_t speed_correction = 0;
-    float angle=0;
+    //int16_t speed_correction = 0;
+    float angle, diff_angle, norme, diff_norme=0;
 
     while(1){
         time = chVTGetSystemTime();
@@ -102,19 +102,32 @@ static THD_FUNCTION(PiRegulator, arg) {
         float dist2 = convertisseur_value_dist(get_calibrated_prox(1));
         float dist4 = convertisseur_value_dist(get_calibrated_prox(3));
 
-        //chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 3 = %f\n",dist3);
-        //chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 2 = %f\n",dist2);
-        //chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 4 = %f\n",dist4);
+        chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 3 = %f\n",dist3);
+        chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 2 = %f\n",dist2);
+        chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 4 = %f\n",dist4);
 
         if((dist4 == 0) || (dist4!=0 && dist2!=0))
         {
-        		//Angle calculation
-        		angle = calcul_angle(dist3, dist2, DIST_CAPT1);
+        		if (dist2==0)
+        		{
+        			angle = 0;
+        		}
+        		else
+        		{
+        			//Angle calculation
+        			angle = calcul_angle(dist3, dist2, DIST_CAPT1, ANGLE);
+        			norme = calcul_angle(dist3, dist2, DIST_CAPT1, NORME);
+        			diff_angle=angle-GOAL_ANGLE1;
+        			diff_norme=norme-GOAL_NORME1;
+        		}
         }
         else if(dist2 == 0)
         {
         		//Angle calculation
-        		angle = calcul_angle(dist4, dist3, DIST_CAPT2);
+        		angle = calcul_angle(dist4, dist3, DIST_CAPT2, ANGLE);
+        		norme = calcul_angle(dist4, dist3, DIST_CAPT2, NORME);
+        		diff_angle=angle-GOAL_ANGLE2;
+        		diff_norme=norme-GOAL_NORME2;
         }
         else
         {
@@ -123,7 +136,9 @@ static THD_FUNCTION(PiRegulator, arg) {
         }
 
         chprintf((BaseSequentialStream *)&SDU1, "Angle = %f\n",angle);
-        chprintf((BaseSequentialStream *)&SDU1, "Diff angle = %f\n",angle-GOAL_ANGLE);
+        //chprintf((BaseSequentialStream *)&SDU1, "Diff angle = %f\n",diff_angle);
+        //chprintf((BaseSequentialStream *)&SDU1, "Norme = %f\n",norme);
+        //chprintf((BaseSequentialStream *)&SDU1, "Diff norme = %f\n",diff_norme);
 
         //computes the speed to give to the motors
         //The angle is determined above
@@ -135,8 +150,86 @@ static THD_FUNCTION(PiRegulator, arg) {
 		//left_motor_set_speed(SPEED - speed_correction);
 
         //100Hz
-        chThdSleepUntilWindowed(time, time + MS2ST(1000));
+        chThdSleepUntilWindowed(time, time + MS2ST(10));
     }
+}
+
+
+static THD_WORKING_AREA(waDepassement, 128);
+static THD_FUNCTION(Depassement, arg)
+{
+
+
+	chRegSetThreadName(__FUNCTION__);
+	(void)arg;
+
+	systime_t time;
+
+	while(1)
+	{
+		time = chVTGetSystemTime();
+
+		if((get_calibrated_prox(0)>= 200)|| (get_calibrated_prox(7)>=200))
+		{
+			left_motor_set_speed(0);
+			right_motor_set_speed(0);		//Arrete les deux moteurs
+			chThdSleepMilliseconds(1000);
+
+			left_motor_set_pos(0);
+			while(left_motor_get_pos()>= -325)  		// le temps d'un quart de tour pour contourner l'obstacle
+			{
+				left_motor_set_speed(-1000);
+				right_motor_set_speed(1000);
+			}
+
+			left_motor_set_speed(0);
+			right_motor_set_speed(0);
+			chThdSleepMilliseconds(10);
+			left_motor_set_speed(1000);
+			right_motor_set_speed(1000);		// TOUT DROIT
+			chThdSleepMilliseconds(750);
+
+
+			left_motor_set_pos(0);
+			while(left_motor_get_pos()<=325)  		// le temps d'un quart de tour pour contourner l'obstacle
+			{
+				left_motor_set_speed(1000);
+				right_motor_set_speed(-1000);
+			}
+
+			left_motor_set_speed(0);
+			right_motor_set_speed(0);
+			chThdSleepMilliseconds(10);
+			left_motor_set_speed(1000);
+			right_motor_set_speed(1000);		// TOUT DROIT
+			chThdSleepMilliseconds(2500);
+
+
+			left_motor_set_pos(0);
+			while(left_motor_get_pos()<=325)  		// le temps d'un quart de tour pour contourner l'obstacle
+			{
+				left_motor_set_speed(1000);
+				right_motor_set_speed(-1000);
+			}
+
+			left_motor_set_speed(0);
+			right_motor_set_speed(0);
+			chThdSleepMilliseconds(10);
+			left_motor_set_speed(1000);
+			right_motor_set_speed(1000);		// TOUT DROIT
+			chThdSleepMilliseconds(750);
+
+			left_motor_set_pos(0);
+			while(left_motor_get_pos()>= -325)  		// le temps d'un quart de tour pour contourner l'obstacle
+			{
+				left_motor_set_speed(-1000);
+				right_motor_set_speed(1000);
+			}
+		}
+
+		 //100Hz
+		 chThdSleepUntilWindowed(time, time + MS2ST(10));
+	}
 }
 
 
@@ -154,7 +247,7 @@ float convertisseur_value_dist(float value)
 	}
 }
 
-float calcul_angle (float dist1, float dist2, float dist_capt)
+float calcul_angle (float dist1, float dist2, float dist_capt, bool var)
 {
 	double x,y,alpha, l1 =0; //initializes local variables
 
@@ -169,13 +262,27 @@ float calcul_angle (float dist1, float dist2, float dist_capt)
 		l1 = 25 + dist1;
 	}
 
+
+
 	x= dist_capt*cos(alpha);
 	y=l1*cos(alpha) + dist_capt*sin(alpha);		//creates 2 coordinates of a vector
 
-	float angle= (180/M_PI)*atan(y/x);				// computes the angle of this vector to the wall
-	return angle;
+	float angle = alpha;
+	//float angle= (180/M_PI)*atan(y/x);		// computes the angle of this vector to the wall
+	float norme= sqrt(x*x+y*y);
+
+	if(var==ANGLE){
+		return angle;
+	}
+
+	return norme;
 }
 
 void pi_regulator_start(void){
 	chThdCreateStatic(waPiRegulator, sizeof(waPiRegulator), NORMALPRIO, PiRegulator, NULL);
+}
+
+void depassement_start(void)
+{
+	chThdCreateStatic(waDepassement, sizeof(waDepassement), HIGHPRIO, Depassement, NULL);
 }

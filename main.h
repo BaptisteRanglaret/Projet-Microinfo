@@ -15,10 +15,15 @@ extern "C" {
 #define WIDTH_SLOPE				5
 #define MIN_LINE_WIDTH			40
 #define PXTOCM					1570.0f //experimental value
-
+#define ANGLE					1
+#define NORME					0
 
 //PID pour la distance avec le mur
-#define GOAL_ANGLE				42.3f //angle cible de l'axe du robot p.r. au mur
+#define GOAL_ANGLE1				63.4f //angle cible de l'axe du robot p.r. au mur si capteur 2 et 3
+#define GOAL_ANGLE2				59.0f //angle cible de l'axe du robot p.r. au mur si capteur 3 et 4
+#define GOAL_NORME1				111.8f
+#define GOAL_NORME2				116.6f
+
 #define DIST_CAPT1 				50.0f
 #define DIST_CAPT2				60.0f
 #define MAX_DISTANCE 			25.0f
@@ -33,7 +38,7 @@ extern "C" {
 #define MAX_SUM_ERROR 			2000.0f
 #define MAX_ERROR_DIFF			250.0f
 #define MAX_ERROR				1000.0f
-#define SPEED					700  // default step/s
+#define SPEED					1000  // default step/s
 
 /** Robot wide IPC bus. */
 extern messagebus_t bus;
