@@ -20,11 +20,11 @@
 
 #include <leds.h>
 
-//#include <audio_processing.h>
-//#include <fft.h>
-//#include <communications.h>
 #include <arm_math.h>
-//#include <goal.h>
+
+#include <pal.h>
+#include <spi_comm.h>
+
 
 messagebus_t bus;
 MUTEX_DECL(bus_lock);
@@ -77,31 +77,43 @@ int main(void)
 
     //starts the serial communication
     serial_start();
+
     //start the USB communication
     usb_start();
+
     //starts the camera
-    dcmi_start();
-	po8030_start();
+    //dcmi_start();
+	//po8030_start();
+
 	//inits the motors
 	motors_init();
 
+	//starts spi communication
+	spi_comm_start();
+
 	messagebus_init(&bus, &bus_lock, &bus_condvar);
-	//starts sensors
+
+	//starts proximity sensors
 	proximity_start();
+
+	clignotant_start();
 
 	depassement_start();
 
-	//stars the threads for the pi regulator and the processing of the image
+	manoeuvre_start();
+
+	deplacement_start();
+
+	//stars the threads for the pi regulator
 	//pi_regulator_start();
-	//process_image_start();
+
 
     /* Infinite loop. */
     while (1)
     {
 
-
-        left_motor_set_speed(1000);
-        right_motor_set_speed(-1000);
+        //left_motor_set_speed(1000);
+        //right_motor_set_speed(1000);
 
         chThdSleepMilliseconds(1000);
     }

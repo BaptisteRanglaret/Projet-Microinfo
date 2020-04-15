@@ -152,7 +152,9 @@ build/obj/main.o: main.c \
  ../../lib/e-puck2_main-processor/src/audio/mp45dt02_processing.h \
  ../../lib/e-puck2_main-processor/src/leds.h \
  ../../lib/e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/arm_math.h \
- ../../lib/e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/core_cm4.h
+ ../../lib/e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/core_cm4.h \
+ ../../lib/e-puck2_main-processor/ChibiOS//os/hal/include/pal.h \
+ ../../lib/e-puck2_main-processor/src/spi_comm.h
 
 /Applications/Eclipse_e-puck2.app/Contents/Eclipse_e-puck2/Tools/gcc-arm-none-eabi-7-2017-q4-major/arm-none-eabi/include/stdio.h:
 
@@ -467,3 +469,7 @@ process_image.h:
 ../../lib/e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/arm_math.h:
 
 ../../lib/e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/core_cm4.h:
+
+../../lib/e-puck2_main-processor/ChibiOS//os/hal/include/pal.h:
+
+../../lib/e-puck2_main-processor/src/spi_comm.h:

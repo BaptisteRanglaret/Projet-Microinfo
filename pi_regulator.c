@@ -155,83 +155,6 @@ static THD_FUNCTION(PiRegulator, arg) {
 }
 
 
-static THD_WORKING_AREA(waDepassement, 128);
-static THD_FUNCTION(Depassement, arg)
-{
-
-
-	chRegSetThreadName(__FUNCTION__);
-	(void)arg;
-
-	systime_t time;
-
-	while(1)
-	{
-		time = chVTGetSystemTime();
-
-		if((get_calibrated_prox(0)>= 200)|| (get_calibrated_prox(7)>=200))
-		{
-			left_motor_set_speed(0);
-			right_motor_set_speed(0);		//Arrete les deux moteurs
-			chThdSleepMilliseconds(1000);
-
-			left_motor_set_pos(0);
-			while(left_motor_get_pos()>= -325)  		// le temps d'un quart de tour pour contourner l'obstacle
-			{
-				left_motor_set_speed(-1000);
-				right_motor_set_speed(1000);
-			}
-
-			left_motor_set_speed(0);
-			right_motor_set_speed(0);
-			chThdSleepMilliseconds(10);
-			left_motor_set_speed(1000);
-			right_motor_set_speed(1000);		// TOUT DROIT
-			chThdSleepMilliseconds(750);
-
-
-			left_motor_set_pos(0);
-			while(left_motor_get_pos()<=325)  		// le temps d'un quart de tour pour contourner l'obstacle
-			{
-				left_motor_set_speed(1000);
-				right_motor_set_speed(-1000);
-			}
-
-			left_motor_set_speed(0);
-			right_motor_set_speed(0);
-			chThdSleepMilliseconds(10);
-			left_motor_set_speed(1000);
-			right_motor_set_speed(1000);		// TOUT DROIT
-			chThdSleepMilliseconds(2500);
-
-
-			left_motor_set_pos(0);
-			while(left_motor_get_pos()<=325)  		// le temps d'un quart de tour pour contourner l'obstacle
-			{
-				left_motor_set_speed(1000);
-				right_motor_set_speed(-1000);
-			}
-
-			left_motor_set_speed(0);
-			right_motor_set_speed(0);
-			chThdSleepMilliseconds(10);
-			left_motor_set_speed(1000);
-			right_motor_set_speed(1000);		// TOUT DROIT
-			chThdSleepMilliseconds(750);
-
-			left_motor_set_pos(0);
-			while(left_motor_get_pos()>= -325)  		// le temps d'un quart de tour pour contourner l'obstacle
-			{
-				left_motor_set_speed(-1000);
-				right_motor_set_speed(1000);
-			}
-		}
-
-		 //100Hz
-		 chThdSleepUntilWindowed(time, time + MS2ST(10));
-	}
-}
-
 
 // ATTENTION AUX MAGIC NUMBERS, faire une macro svp
 float convertisseur_value_dist(float value)
@@ -282,7 +205,3 @@ void pi_regulator_start(void){
 	chThdCreateStatic(waPiRegulator, sizeof(waPiRegulator), NORMALPRIO, PiRegulator, NULL);
 }
 
-void depassement_start(void)
-{
-	chThdCreateStatic(waDepassement, sizeof(waDepassement), HIGHPRIO, Depassement, NULL);
-}

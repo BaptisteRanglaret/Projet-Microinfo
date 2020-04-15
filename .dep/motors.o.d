@@ -100,7 +100,9 @@ build/obj/motors.o: ../../lib/e-puck2_main-processor/src/motors.c \
  ../../lib/e-puck2_main-processor/ChibiOS//os/hal/include/mmc_spi.h \
  ../../lib/e-puck2_main-processor/ChibiOS//os/hal/include/serial_usb.h \
  ../../lib/e-puck2_main-processor/src/motors.h \
- ../../lib/e-puck2_main-processor/src/leds.h
+ ../../lib/e-puck2_main-processor/src/leds.h \
+ ../../lib/e-puck2_main-processor/src/sensors/proximity.h \
+ ../../lib/e-puck2_main-processor/ChibiOS//os/hal/include/pal.h
 
 ../../lib/e-puck2_main-processor/ChibiOS//os/rt/include/ch.h:
 
@@ -307,3 +309,7 @@ mcuconf.h:
 ../../lib/e-puck2_main-processor/src/motors.h:
 
 ../../lib/e-puck2_main-processor/src/leds.h:
+
+../../lib/e-puck2_main-processor/src/sensors/proximity.h:
+
+../../lib/e-puck2_main-processor/ChibiOS//os/hal/include/pal.h:
