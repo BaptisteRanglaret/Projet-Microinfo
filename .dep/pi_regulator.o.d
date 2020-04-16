@@ -143,7 +143,7 @@ build/obj/pi_regulator.o: pi_regulator.c \
  /Applications/Eclipse_e-puck2.app/Contents/Eclipse_e-puck2/Tools/gcc-arm-none-eabi-7-2017-q4-major/arm-none-eabi/include/stdlib.h \
  /Applications/Eclipse_e-puck2.app/Contents/Eclipse_e-puck2/Tools/gcc-arm-none-eabi-7-2017-q4-major/arm-none-eabi/include/machine/stdlib.h \
  /Applications/Eclipse_e-puck2.app/Contents/Eclipse_e-puck2/Tools/gcc-arm-none-eabi-7-2017-q4-major/arm-none-eabi/include/alloca.h \
- ../../lib/e-puck2_main-processor/src/motors.h pi_regulator.h \
+ mouvement.h pi_regulator.h \
  ../../lib/e-puck2_main-processor/src/sensors/proximity.h
 
 ../../lib/e-puck2_main-processor/ChibiOS//os/rt/include/ch.h:
@@ -438,7 +438,7 @@ main.h:
 
 /Applications/Eclipse_e-puck2.app/Contents/Eclipse_e-puck2/Tools/gcc-arm-none-eabi-7-2017-q4-major/arm-none-eabi/include/alloca.h:
 
-../../lib/e-puck2_main-processor/src/motors.h:
+mouvement.h:
 
 pi_regulator.h:
 

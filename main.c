@@ -8,8 +8,6 @@
 #include "memory_protection.h"
 #include <usbcfg.h>
 #include <main.h>
-#include <motors.h>
-#include <camera/po8030.h>
 #include <chprintf.h>
 
 #include <pi_regulator.h>
@@ -21,6 +19,8 @@
 #include <leds.h>
 
 #include <arm_math.h>
+#include <motors.h>
+#include <mouvement.h>
 
 #include <pal.h>
 #include <spi_comm.h>
@@ -93,28 +93,25 @@ int main(void)
 
 	messagebus_init(&bus, &bus_lock, &bus_condvar);
 
-	//starts proximity sensors
+	//starts everything
 	proximity_start();
-
 	clignotant_start();
-
 	depassement_start();
-
 	manoeuvre_start();
-
 	deplacement_start();
+	//asmr_start();
 
-	//stars the threads for the pi regulator
+	//stars the thread for the pi regulator
 	//pi_regulator_start();
+
+	//mic_start(&processAudioData);
 
 
     /* Infinite loop. */
     while (1)
     {
-
-        //left_motor_set_speed(1000);
-        //right_motor_set_speed(1000);
-
+    		//int son = mic_get_volume(MIC_BACK);
+    		//chprintf((BaseSequentialStream *)&SDU1, "Son = %d\n", son);
         chThdSleepMilliseconds(1000);
     }
 }
