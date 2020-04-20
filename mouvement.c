@@ -5,7 +5,10 @@
 #include "sensors/proximity.h"
 #include "pal.h"
 #include <motors.h>
-
+#include <audio_processing.h>
+#include <chprintf.h>
+#include <usbcfg.h>
+#include <pi_regulator.h>
 
 static int cligno=0;  // variable globale pour transmettre l'état du clignotant entre les threads
 static int mobile=1;	 //	variable globale pour activer/désactiver le mouvement en ligne droite de base en fonction des autres threads
@@ -20,20 +23,28 @@ static THD_FUNCTION(Manoeuvre, arg)
 	(void)arg;
 
 	systime_t time;
+	int son=0;
 
 	while(1)
 	{
 		time = chVTGetSystemTime();
 
-		if((get_calibrated_prox(5)>= 200) && mobile==1 ) // si il détecte une place et si il n'est pas en train de faire un autre manoeuvre
+		if((get_calibrated_prox(5)>= 200) && mobile>=1 ) // si il détecte une place et si il n'est pas en train de faire un autre manoeuvre
 		{
-			mobile=0; // désactive la thread de déplacement de base
+			mobile=2; // désactive la thread de déplacement de base et interdit les autres manoeuvres
 
 			left_motor_set_speed(0);				// s'arrête si détecte une place
 			right_motor_set_speed(0);
 			cligno=1;							// Allumer le cligno sur les leds 2 et 4
 			chThdSleepMilliseconds(1000);
 
+			son = return_signal();
+			while(son != 1)
+			{
+				//chprintf((BaseSequentialStream *)&SDU1, "Son detecte\n");
+				//left_motor_set_speed(0);
+				//right_motor_set_speed(0);
+			}
 
 			left_motor_set_speed(-1000);
 			right_motor_set_speed(-1000); // recule pour se mettre au niveau de la place
@@ -117,7 +128,7 @@ static THD_FUNCTION(Clignotant, arg)
 
 }
 
-static THD_WORKING_AREA(waDepassement, 128);
+static THD_WORKING_AREA(waDepassement, 128);   // gérer la mémoire !!
 static THD_FUNCTION(Depassement, arg)
 {
 
@@ -223,7 +234,7 @@ static THD_FUNCTION(Deplacement, arg)
 		{
 			mobile=1;
 		}
-		if(mobile)
+		if(mobile==1)
 		{
 			left_motor_set_speed(1000);
 			right_motor_set_speed(1000);
@@ -235,30 +246,6 @@ static THD_FUNCTION(Deplacement, arg)
 
 }
 
-static THD_WORKING_AREA(waAsmr, 128);
-static THD_FUNCTION(Asmr, arg)
-{
-	chRegSetThreadName(__FUNCTION__);
-	(void)arg;
-
-	systime_t time;
-
-	while(1)
-	{
-		time = chVTGetSystemTime();
-
-		//if(son)
-		//{
-		//	toggle_rgb_led(LED4,0, 255 );
-		//	toggle_rgb_led(LED4,1, 165 );
-		//}
-
-		//100Hz
-		chThdSleepUntilWindowed(time, time + MS2ST(10));
-	}
-
-
-}
 
 
 void clignotant_start(void)
@@ -281,8 +268,4 @@ void deplacement_start(void)
 	chThdCreateStatic(waDeplacement, sizeof(waDeplacement), NORMALPRIO, Deplacement, NULL);
 }
 
-void asmr_start(void)
-{
-	chThdCreateStatic(waAsmr, sizeof(waAsmr), NORMALPRIO, Asmr, NULL);
-}
 /**************************END PUBLIC FUNCTIONS***********************************/

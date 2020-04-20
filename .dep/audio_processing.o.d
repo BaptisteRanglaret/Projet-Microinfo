@@ -136,6 +136,8 @@ build/obj/audio_processing.o: audio_processing.c \
  ../../lib/e-puck2_main-processor/src/usbcfg.h \
  ../../lib/e-puck2_main-processor/ChibiOS//os/hal/lib/streams/chprintf.h \
  /Applications/Eclipse_e-puck2.app/Contents/Eclipse_e-puck2/Tools/gcc-arm-none-eabi-7-2017-q4-major/lib/gcc/arm-none-eabi/7.2.1/include/stdarg.h \
+ /Applications/Eclipse_e-puck2.app/Contents/Eclipse_e-puck2/Tools/gcc-arm-none-eabi-7-2017-q4-major/arm-none-eabi/include/stdio.h \
+ /Applications/Eclipse_e-puck2.app/Contents/Eclipse_e-puck2/Tools/gcc-arm-none-eabi-7-2017-q4-major/arm-none-eabi/include/sys/stdio.h \
  ../../lib/e-puck2_main-processor/src/audio/microphone.h \
  ../../lib/e-puck2_main-processor/src/audio/mp45dt02_processing.h \
  audio_processing.h communications.h fft.h \
@@ -425,6 +427,10 @@ main.h:
 ../../lib/e-puck2_main-processor/ChibiOS//os/hal/lib/streams/chprintf.h:
 
 /Applications/Eclipse_e-puck2.app/Contents/Eclipse_e-puck2/Tools/gcc-arm-none-eabi-7-2017-q4-major/lib/gcc/arm-none-eabi/7.2.1/include/stdarg.h:
+
+/Applications/Eclipse_e-puck2.app/Contents/Eclipse_e-puck2/Tools/gcc-arm-none-eabi-7-2017-q4-major/arm-none-eabi/include/stdio.h:
+
+/Applications/Eclipse_e-puck2.app/Contents/Eclipse_e-puck2/Tools/gcc-arm-none-eabi-7-2017-q4-major/arm-none-eabi/include/sys/stdio.h:
 
 ../../lib/e-puck2_main-processor/src/audio/microphone.h:
 

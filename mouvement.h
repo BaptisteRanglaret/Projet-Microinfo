@@ -13,6 +13,5 @@ void manoeuvre_start(void);
 
 void deplacement_start(void);
 
-void asmr_start(void);
 
 #endif /* MOUVEMENT_H */

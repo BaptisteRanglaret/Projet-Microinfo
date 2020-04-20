@@ -3,6 +3,8 @@
 #include <main.h>
 #include <usbcfg.h>
 #include <chprintf.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include <audio/microphone.h>
 #include <audio_processing.h>
@@ -12,78 +14,61 @@
 #include <motors.h>
 
 //semaphore
-static BSEMAPHORE_DECL(sendToComputer_sem, TRUE);
+//static BSEMAPHORE_DECL(sendToComputer_sem, TRUE);
 
 //2 times FFT_SIZE because these arrays contain complex numbers (real + imaginary)
 static float micLeft_cmplx_input[2 * FFT_SIZE];
-static float micRight_cmplx_input[2 * FFT_SIZE];
-static float micFront_cmplx_input[2 * FFT_SIZE];
-static float micBack_cmplx_input[2 * FFT_SIZE];
+//static float micRight_cmplx_input[2 * FFT_SIZE];
+//static float micFront_cmplx_input[2 * FFT_SIZE];
+//static float micBack_cmplx_input[2 * FFT_SIZE];
 //Arrays containing the computed magnitude of the complex numbers
 static float micLeft_output[FFT_SIZE];
-static float micRight_output[FFT_SIZE];
-static float micFront_output[FFT_SIZE];
-static float micBack_output[FFT_SIZE];
+//static float micRight_output[FFT_SIZE];
+//static float micFront_output[FFT_SIZE];
+//static float micBack_output[FFT_SIZE];
 
-#define MIN_VALUE_THRESHOLD	10000 
+static int signal=0; // variable globale à transmettre aux threads de mouvements
+
+#define MIN_VALUE_THRESHOLD	100000
 
 #define MIN_FREQ		10	//we don't analyze before this index to not use resources for nothing
-#define FREQ_FORWARD	16	//250Hz
-#define FREQ_LEFT		19	//296Hz
-#define FREQ_RIGHT		23	//359HZ
-#define FREQ_BACKWARD	26	//406Hz
+#define FREQ_18		18	//1050Hz
+#define FREQ_20		20	//1180Hz
+#define FREQ_22		22	//1300HZ
+#define FREQ_24		24	//1440Hz
+#define FREQ_26		26	//1560Hz
 #define MAX_FREQ		30	//we don't analyze after this index to not use resources for nothing
 
-#define FREQ_FORWARD_L		(FREQ_FORWARD-1)
-#define FREQ_FORWARD_H		(FREQ_FORWARD+1)
-#define FREQ_LEFT_L			(FREQ_LEFT-1)
-#define FREQ_LEFT_H			(FREQ_LEFT+1)
-#define FREQ_RIGHT_L		(FREQ_RIGHT-1)
-#define FREQ_RIGHT_H		(FREQ_RIGHT+1)
-#define FREQ_BACKWARD_L		(FREQ_BACKWARD-1)
-#define FREQ_BACKWARD_H		(FREQ_BACKWARD+1)
 
 /*
 *	Simple function used to detect the highest value in a buffer
 *	and to execute a motor command depending on it
 */
-void sound_remote(float* data){
+void sound_remote(float* data)
+{
 	float max_norm = MIN_VALUE_THRESHOLD;
 	int16_t max_norm_index = -1; 
 
 	//search for the highest peak
-	for(uint16_t i = MIN_FREQ ; i <= MAX_FREQ ; i++){
-		if(data[i] > max_norm){
+	for(uint16_t i = MIN_FREQ ; i <= MAX_FREQ ; i++)
+	{
+		if(data[i] > max_norm)
+		{
 			max_norm = data[i];
 			max_norm_index = i;
 		}
 	}
 
-	//go forward
-	if(max_norm_index >= FREQ_FORWARD_L && max_norm_index <= FREQ_FORWARD_H){
-		left_motor_set_speed(600);
-		right_motor_set_speed(600);
+	//Sets signal =1
+	if(max_norm_index >= FREQ_20 && max_norm_index <= FREQ_26)
+	{
+		//chprintf((BaseSequentialStream *)&SDU1, "Son detecte\n");
+		signal=1;
 	}
-	//turn left
-	else if(max_norm_index >= FREQ_LEFT_L && max_norm_index <= FREQ_LEFT_H){
-		left_motor_set_speed(-600);
-		right_motor_set_speed(600);
+	else
+	{
+		signal=0;
 	}
-	//turn right
-	else if(max_norm_index >= FREQ_RIGHT_L && max_norm_index <= FREQ_RIGHT_H){
-		left_motor_set_speed(600);
-		right_motor_set_speed(-600);
-	}
-	//go backward
-	else if(max_norm_index >= FREQ_BACKWARD_L && max_norm_index <= FREQ_BACKWARD_H){
-		left_motor_set_speed(-600);
-		right_motor_set_speed(-600);
-	}
-	else{
-		left_motor_set_speed(0);
-		right_motor_set_speed(0);
-	}
-	
 }
 
 /*
@@ -109,19 +94,19 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 	//static uint8_t mustSend = 0;
 
 	//loop to fill the buffers
-	for(uint16_t i = 0 ; i < num_samples ; i+=4){
+	for(uint16_t i = 0 ; i < num_samples ; i++){
 		//construct an array of complex numbers. Put 0 to the imaginary part
-		micRight_cmplx_input[nb_samples] = (float)data[i + MIC_RIGHT];
+		//micRight_cmplx_input[nb_samples] = (float)data[i + MIC_RIGHT];
 		micLeft_cmplx_input[nb_samples] = (float)data[i + MIC_LEFT];
-		micBack_cmplx_input[nb_samples] = (float)data[i + MIC_BACK];
-		micFront_cmplx_input[nb_samples] = (float)data[i + MIC_FRONT];
+		//micBack_cmplx_input[nb_samples] = (float)data[i + MIC_BACK];
+		//micFront_cmplx_input[nb_samples] = (float)data[i + MIC_FRONT];
 
 		nb_samples++;
 
-		micRight_cmplx_input[nb_samples] = 0;
+		//micRight_cmplx_input[nb_samples] = 0;
 		micLeft_cmplx_input[nb_samples] = 0;
-		micBack_cmplx_input[nb_samples] = 0;
-		micFront_cmplx_input[nb_samples] = 0;
+		//micBack_cmplx_input[nb_samples] = 0;
+		//micFront_cmplx_input[nb_samples] = 0;
 
 		nb_samples++;
 
@@ -138,10 +123,10 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 		*	This is an "In Place" function. 
 		*/
 
-		doFFT_optimized(FFT_SIZE, micRight_cmplx_input);
+		//doFFT_optimized(FFT_SIZE, micRight_cmplx_input);
 		doFFT_optimized(FFT_SIZE, micLeft_cmplx_input);
-		doFFT_optimized(FFT_SIZE, micFront_cmplx_input);
-		doFFT_optimized(FFT_SIZE, micBack_cmplx_input);
+		//doFFT_optimized(FFT_SIZE, micFront_cmplx_input);
+		//doFFT_optimized(FFT_SIZE, micBack_cmplx_input);
 
 		/*	Magnitude processing
 		*
@@ -150,10 +135,10 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 		*	real numbers.
 		*
 		*/
-		arm_cmplx_mag_f32(micRight_cmplx_input, micRight_output, FFT_SIZE);
+		//arm_cmplx_mag_f32(micRight_cmplx_input, micRight_output, FFT_SIZE);
 		arm_cmplx_mag_f32(micLeft_cmplx_input, micLeft_output, FFT_SIZE);
-		arm_cmplx_mag_f32(micFront_cmplx_input, micFront_output, FFT_SIZE);
-		arm_cmplx_mag_f32(micBack_cmplx_input, micBack_output, FFT_SIZE);
+		//arm_cmplx_mag_f32(micFront_cmplx_input, micFront_output, FFT_SIZE);
+		//arm_cmplx_mag_f32(micBack_cmplx_input, micBack_output, FFT_SIZE);
 
 		//sends only one FFT result over 10 for 1 mic to not flood the computer
 		//sends to UART3
@@ -169,15 +154,15 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 	}
 }
 
-void wait_send_to_computer(void){
+/*void wait_send_to_computer(void){
 	chBSemWait(&sendToComputer_sem);
-}
+}*/
 
 float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 	if(name == LEFT_CMPLX_INPUT){
 		return micLeft_cmplx_input;
 	}
-	else if (name == RIGHT_CMPLX_INPUT){
+	/*else if (name == RIGHT_CMPLX_INPUT){
 		return micRight_cmplx_input;
 	}
 	else if (name == FRONT_CMPLX_INPUT){
@@ -197,8 +182,13 @@ float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 	}
 	else if (name == BACK_OUTPUT){
 		return micBack_output;
-	}
+	}*/
 	else{
 		return NULL;
 	}
+}
+
+int return_signal(void)
+{
+	return signal;
 }

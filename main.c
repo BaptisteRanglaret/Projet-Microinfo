@@ -25,6 +25,8 @@
 #include <pal.h>
 #include <spi_comm.h>
 
+#include <audio_processing.h>
+
 
 messagebus_t bus;
 MUTEX_DECL(bus_lock);
@@ -95,14 +97,13 @@ int main(void)
 
 	//starts everything
 	proximity_start();
-	clignotant_start();
-	depassement_start();
-	manoeuvre_start();
-	deplacement_start();
-	//asmr_start();
+	//clignotant_start();
+	//depassement_start();
+	//manoeuvre_start();
+	//deplacement_start();
 
 	//stars the thread for the pi regulator
-	//pi_regulator_start();
+	pi_regulator_start();
 
 	//mic_start(&processAudioData);
 
@@ -110,8 +111,6 @@ int main(void)
     /* Infinite loop. */
     while (1)
     {
-    		//int son = mic_get_volume(MIC_BACK);
-    		//chprintf((BaseSequentialStream *)&SDU1, "Son = %d\n", son);
         chThdSleepMilliseconds(1000);
     }
 }

@@ -25,7 +25,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 	uint8_t stop = 0, wrong_line = 0, line_not_found = 0;
 	uint32_t mean = 0;
 
-	static uint16_t last_width = PXTOCM/GOAL_ANGLE1;
+	static uint16_t last_width = PXTOCM/GOAL_ANGLE;
 
 	//performs an average
 	for(uint16_t i = 0 ; i < IMAGE_BUFFER_SIZE ; i++){

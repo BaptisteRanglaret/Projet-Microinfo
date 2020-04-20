@@ -10,21 +10,22 @@
 #include <pi_regulator.h>
 //#include <process_image.h>
 #include <sensors/proximity.h>
+#include <motors.h>
 
-float calcul_angle (float dist1, float dist2, float dist_capt, bool var);
+float calcul_angle (float dist2, float dist4);
 
 //simple PID regulator implementation
-int16_t pi_regulator(float distance, float goal){
+int16_t pi_regulator(float angle, float goal){
 
 	float error = 0;
 	float speed_correction = 0;
 
-	static float sum_error = 0;
-	static float error_prec=0;
+	//static float sum_error = 0;
+	//static float error_prec=0;
 
-	error = distance - goal;
+	error = angle - goal;
 
-	float error_diff = (error-error_prec);
+	//float error_diff = (error-error_prec); // D of PID
 
 
 
@@ -36,50 +37,45 @@ int16_t pi_regulator(float distance, float goal){
 		return 0;
 	}
 
-	sum_error += error;
+	//sum_error += error;
 
 	//we set a maximum and a minimum for the sum to avoid an uncontrolled growth
 	// COMPRENDRE CE QU'IL SE PASSE SI OVERFLOW
-	if(sum_error > MAX_SUM_ERROR){
+	/*if(sum_error > MAX_SUM_ERROR){
 		sum_error = MAX_SUM_ERROR;
 	}else if(sum_error < -MAX_SUM_ERROR){
 		sum_error = -MAX_SUM_ERROR;
-	}
+	}*/
 
 
-	if(error_diff> MAX_ERROR_DIFF)
+	/*if(error_diff> MAX_ERROR_DIFF)
 	{
 		error_diff = MAX_ERROR_DIFF;
 	}
 	else if(error_diff < -MAX_ERROR_DIFF)
 	{
 		error_diff = -MAX_ERROR_DIFF;
-	}
+	}*/
 
-	if(error> MAX_ERROR)
-		{
-			error = MAX_ERROR;
-		}
-		else if(error < -MAX_ERROR)
-		{
-			error= -MAX_ERROR;
-		}
+	/*if(error> MAX_ERROR)
+	{
+		error = MAX_ERROR;
+	}
+	else if(error < -MAX_ERROR)
+	{
+		error= -MAX_ERROR;
+	}*/
 
 	// On met deux Kp pour contrer la non-linéarité des valeurs de l'erreur
-	if(fabs(error)> 300)
-	{
-		speed_correction = KP * error + KD* error_diff + KI * sum_error;
-	}
-	else
-	{
-		speed_correction = KP * error + KD* error_diff + KI * sum_error;
-	}
+
+	speed_correction = KP * error ; //+ KD* error_diff + KI * sum_error;
+
 
 
 	//chprintf((BaseSequentialStream *)&SDU1, "KP*ERROR = %f\n",KP*error);
 	//chprintf((BaseSequentialStream *)&SDU1, "KI*SUM_ERROR = %f\n",KI*sum_error);
 	//chThdSleepMilliseconds(1000);
-	error_prec = error;
+	//error_prec = error;
     return (int16_t)speed_correction;
 }
 
@@ -92,7 +88,7 @@ static THD_FUNCTION(PiRegulator, arg) {
     systime_t time;
 
     //int16_t speed_correction = 0;
-    float angle, diff_angle, norme, diff_norme=0;
+    float angle , angle_correction, dist_correction =0; //, norme, diff_norme=0;
 
     while(1){
         time = chVTGetSystemTime();
@@ -102,52 +98,23 @@ static THD_FUNCTION(PiRegulator, arg) {
         float dist2 = convertisseur_value_dist(get_calibrated_prox(1));
         float dist4 = convertisseur_value_dist(get_calibrated_prox(3));
 
-        chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 3 = %f\n",dist3);
-        chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 2 = %f\n",dist2);
-        chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 4 = %f\n",dist4);
+        //chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 3 = %f\n",dist3);
+        //chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 2 = %f\n",dist2);
+        //chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 4 = %f\n",dist4);
 
-        if((dist4 == 0) || (dist4!=0 && dist2!=0))
-        {
-        		if (dist2==0)
-        		{
-        			angle = 0;
-        		}
-        		else
-        		{
-        			//Angle calculation
-        			angle = calcul_angle(dist3, dist2, DIST_CAPT1, ANGLE);
-        			norme = calcul_angle(dist3, dist2, DIST_CAPT1, NORME);
-        			diff_angle=angle-GOAL_ANGLE1;
-        			diff_norme=norme-GOAL_NORME1;
-        		}
-        }
-        else if(dist2 == 0)
-        {
-        		//Angle calculation
-        		angle = calcul_angle(dist4, dist3, DIST_CAPT2, ANGLE);
-        		norme = calcul_angle(dist4, dist3, DIST_CAPT2, NORME);
-        		diff_angle=angle-GOAL_ANGLE2;
-        		diff_norme=norme-GOAL_NORME2;
-        }
-        else
-        {
-        		angle = 0;
-        		// faire un truc pour qu'il tourne en rond ou cherche le mur ?
-        }
+        	//Angle calculation
+        	angle = calcul_angle(dist2, dist4);
 
-        chprintf((BaseSequentialStream *)&SDU1, "Angle = %f\n",angle);
-        //chprintf((BaseSequentialStream *)&SDU1, "Diff angle = %f\n",diff_angle);
-        //chprintf((BaseSequentialStream *)&SDU1, "Norme = %f\n",norme);
-        //chprintf((BaseSequentialStream *)&SDU1, "Diff norme = %f\n",diff_norme);
+        //chprintf((BaseSequentialStream *)&SDU1, "Angle = %f\n",angle);
 
-        //computes the speed to give to the motors
+        //computes the angle correction
         //The angle is determined above
-        //speed_correction = pi_regulator(angle, GOAL_ANGLE);
-
+        angle_correction = pi_regulator(angle, GOAL_ANGLE);
+        dist_correction = dist3-GOAL_DIST;
 
         //applies the speed from the PID regulator
-		//right_motor_set_speed(SPEED + speed_correction);
-		//left_motor_set_speed(SPEED - speed_correction);
+		right_motor_set_speed(SPEED - (5*dist_correction) + angle_correction);
+		left_motor_set_speed(SPEED + (5*dist_correction) - angle_correction);
 
         //100Hz
         chThdSleepUntilWindowed(time, time + MS2ST(10));
@@ -156,7 +123,7 @@ static THD_FUNCTION(PiRegulator, arg) {
 
 
 
-// ATTENTION AUX MAGIC NUMBERS, faire une macro svp
+// ATTENTION AUX MAGIC NUMBERS
 float convertisseur_value_dist(float value)
 {
 	if (value>124)
@@ -166,39 +133,26 @@ float convertisseur_value_dist(float value)
 	}
 	else
 	{
-		return 0;
+		return 50;
 	}
 }
 
-float calcul_angle (float dist1, float dist2, float dist_capt, bool var)
+// ATTENTION AUX MAGIC NUMBERS
+float calcul_angle (float dist2, float dist4)
 {
-	double x,y,alpha, l1 =0; //initializes local variables
-
-	if(dist_capt == DIST_CAPT1) // if we work with IR2 and IR3
-	{
-		alpha = atan(((dist2+50)-(dist1+70))/dist_capt);
-		l1 = 70 + dist1;
-	}
-	else // if we work with IR3 and IR4
-	{
-		alpha = atan(((dist2+70)-(dist1+25))/dist_capt);
-		l1 = 25 + dist1;
-	}
+	double alpha = 0; //,x, y, l1 =0; //initializes local variables
 
 
+	alpha = asin(((dist4+15)-(dist2+25))/DIST_CAPT);
+	//l1 = 25 + dist4;
 
-	x= dist_capt*cos(alpha);
-	y=l1*cos(alpha) + dist_capt*sin(alpha);		//creates 2 coordinates of a vector
 
-	float angle = alpha;
-	//float angle= (180/M_PI)*atan(y/x);		// computes the angle of this vector to the wall
-	float norme= sqrt(x*x+y*y);
+	//x= DIST_CAPT*cos(alpha);
+	//y=l1*cos(alpha) + DIST_CAPT*sin(alpha);		//creates 2 coordinates of a vector
 
-	if(var==ANGLE){
-		return angle;
-	}
-
-	return norme;
+	//float angle = alpha;
+	float angle= (180/M_PI)*alpha;		// computes the angle of this vector to the wall in degrees
+	return angle;  						// angle négatif si robot s'éloigne du mur
 }
 
 void pi_regulator_start(void){
