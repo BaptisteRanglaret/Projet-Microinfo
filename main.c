@@ -97,15 +97,12 @@ int main(void)
 
 	//starts everything
 	proximity_start();
-	//clignotant_start();
+	clignotant_start();
 	//depassement_start();
-	//manoeuvre_start();
-	//deplacement_start();
+	manoeuvre_start();
+	deplacement_start();
 
-	//stars the thread for the pi regulator
-	pi_regulator_start();
-
-	//mic_start(&processAudioData);
+	mic_start(&processAudioData);
 
 
     /* Infinite loop. */

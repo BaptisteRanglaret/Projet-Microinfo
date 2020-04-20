@@ -27,14 +27,12 @@ extern "C" {
 
 #define KP						10.0f
 
-#define KI 						0.005f	//must not be zero
-
-#define KD						1.0f
-
-#define MAX_SUM_ERROR 			2000.0f
-#define MAX_ERROR_DIFF			250.0f
-#define MAX_ERROR				1000.0f
-#define SPEED					700  // default step/s
+//#define KI 						0.005f	//must not be zero
+//#define KD						1.0f
+//#define MAX_SUM_ERROR 			2000.0f
+//#define MAX_ERROR_DIFF			250.0f
+//#define MAX_ERROR				1000.0f
+#define SPEED					800  // default step/s
 
 /** Robot wide IPC bus. */
 extern messagebus_t bus;

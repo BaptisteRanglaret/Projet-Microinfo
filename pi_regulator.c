@@ -79,50 +79,6 @@ int16_t pi_regulator(float angle, float goal){
     return (int16_t)speed_correction;
 }
 
-static THD_WORKING_AREA(waPiRegulator, 256);
-static THD_FUNCTION(PiRegulator, arg) {
-
-    chRegSetThreadName(__FUNCTION__);
-    (void)arg;
-
-    systime_t time;
-
-    //int16_t speed_correction = 0;
-    float angle , angle_correction, dist_correction =0; //, norme, diff_norme=0;
-
-    while(1){
-        time = chVTGetSystemTime();
-        
-
-        float dist3 = convertisseur_value_dist(get_calibrated_prox(2));
-        float dist2 = convertisseur_value_dist(get_calibrated_prox(1));
-        float dist4 = convertisseur_value_dist(get_calibrated_prox(3));
-
-        //chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 3 = %f\n",dist3);
-        //chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 2 = %f\n",dist2);
-        //chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 4 = %f\n",dist4);
-
-        	//Angle calculation
-        	angle = calcul_angle(dist2, dist4);
-
-        //chprintf((BaseSequentialStream *)&SDU1, "Angle = %f\n",angle);
-
-        //computes the angle correction
-        //The angle is determined above
-        angle_correction = pi_regulator(angle, GOAL_ANGLE);
-        dist_correction = dist3-GOAL_DIST;
-
-        //applies the speed from the PID regulator
-		right_motor_set_speed(SPEED - (5*dist_correction) + angle_correction);
-		left_motor_set_speed(SPEED + (5*dist_correction) - angle_correction);
-
-        //100Hz
-        chThdSleepUntilWindowed(time, time + MS2ST(10));
-    }
-}
-
-
-
 // ATTENTION AUX MAGIC NUMBERS
 float convertisseur_value_dist(float value)
 {
@@ -155,7 +111,4 @@ float calcul_angle (float dist2, float dist4)
 	return angle;  						// angle négatif si robot s'éloigne du mur
 }
 
-void pi_regulator_start(void){
-	chThdCreateStatic(waPiRegulator, sizeof(waPiRegulator), NORMALPRIO, PiRegulator, NULL);
-}
 
