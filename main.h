@@ -14,7 +14,7 @@ extern "C" {
 #define IMAGE_BUFFER_SIZE		640
 #define WIDTH_SLOPE				5
 #define MIN_LINE_WIDTH			40
-#define PXTOCM					1570.0f //experimental value
+//#define PXTOCM					1570.0f //experimental value
 #define ANGLE					1
 #define NORME					0
 
@@ -33,6 +33,11 @@ extern "C" {
 //#define MAX_ERROR_DIFF			250.0f
 //#define MAX_ERROR				1000.0f
 #define SPEED					800  // default step/s
+
+#define MOVE_ON					1
+#define MOVE_OFF					0
+#define MOVE_MANOEUVRE			2
+#define MOVE_START				10
 
 /** Robot wide IPC bus. */
 extern messagebus_t bus;

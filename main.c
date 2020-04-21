@@ -11,7 +11,6 @@
 #include <chprintf.h>
 
 #include <pi_regulator.h>
-#include <process_image.h>
 #include <sensors/proximity.h>
 
 #include <audio/microphone.h>
@@ -98,7 +97,7 @@ int main(void)
 	//starts everything
 	proximity_start();
 	clignotant_start();
-	//depassement_start();
+	depassement_start();
 	manoeuvre_start();
 	deplacement_start();
 

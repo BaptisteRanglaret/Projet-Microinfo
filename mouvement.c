@@ -12,7 +12,7 @@
 #include <main.h>
 
 static int cligno=0;  // variable globale pour transmettre l'état du clignotant entre les threads
-static int mobile=0;	 //	variable globale pour activer/désactiver le mouvement en ligne droite de base en fonction des autres threads
+static int mobile=MOVE_START;	 //	variable globale pour activer/désactiver le mouvement en ligne droite de base en fonction des autres threads
 
 
 /****************************PUBLIC FUNCTIONS*************************************/
@@ -30,9 +30,9 @@ static THD_FUNCTION(Manoeuvre, arg)
 	{
 		time = chVTGetSystemTime();
 
-		if((get_calibrated_prox(5)>= 200) && mobile>=1 ) // si il détecte une place et si il n'est pas en train de faire un autre manoeuvre
+		if((get_calibrated_prox(5)>= 200) && mobile==MOVE_ON ) // si il détecte une place et si il n'est pas en train de faire un autre manoeuvre
 		{
-			mobile=0; // désactive la thread de déplacement de base et interdit les autres manoeuvres
+			mobile=MOVE_OFF; // désactive la thread de déplacement de base et interdit les autres manoeuvres
 
 			left_motor_set_speed(0);				// s'arrête si détecte une place
 			right_motor_set_speed(0);
@@ -72,7 +72,22 @@ static THD_FUNCTION(Manoeuvre, arg)
 
 			left_motor_set_speed(0);
 			right_motor_set_speed(0);
+
+
+			son = return_signal();
+			while(son != 1)
+			{
+				son = return_signal();
+				chThdSleepMilliseconds(10);
+			}
+
+			mobile=MOVE_MANOEUVRE;
+			left_motor_set_speed(1000);
+			right_motor_set_speed(1000);
+
 		}
+
+
 
 		//100Hz
 		chThdSleepUntilWindowed(time, time+MS2ST(10));
@@ -139,14 +154,16 @@ static THD_FUNCTION(Depassement, arg)
 	(void)arg;
 
 	systime_t time;
+	int etat_mobile;
 	//float distance=0;
 	while(1)
 	{
 		time = chVTGetSystemTime();
 
-		if(((get_calibrated_prox(0)>= 200)|| (get_calibrated_prox(7)>=200)) && mobile==1)
+		if(((get_calibrated_prox(0)>= 200)|| (get_calibrated_prox(7)>=200)) && (mobile==MOVE_ON || mobile == MOVE_MANOEUVRE))
 		{
-			mobile=0;			//désactive les autres thread de déplacement
+			etat_mobile=mobile;  // sauvegarde la valeur d'entrée de mobile pour définir la manoeuvre à effectuer
+			mobile=MOVE_OFF;			 //désactive les autres thread de déplacement
 
 			/*if(get_calibrated_prox(0)>get_calibrated_prox(7))
 			{
@@ -156,7 +173,6 @@ static THD_FUNCTION(Depassement, arg)
 			{
 				distance=convertisseur_value_dist(get_calibrated_prox(7));
 			}*/
-
 
 
 			left_motor_set_speed(0);
@@ -184,45 +200,47 @@ static THD_FUNCTION(Depassement, arg)
 			chThdSleepMilliseconds(325);
 			cligno=0;							//eteindre la led6 et 8
 
-			left_motor_set_speed(0);
-			right_motor_set_speed(0);
-			chThdSleepMilliseconds(10);
-			left_motor_set_speed(1000);
-			right_motor_set_speed(1000);		// TOUT DROIT sur deux longueurs et demi de robot
-			chThdSleepMilliseconds(1000);
-			cligno=1;						//Allumer le cligno sur la led 2 et 4
-			left_motor_set_speed(1000);
-			right_motor_set_speed(1000);		// TOUT DROIT sur deux longueurs et demi de robot
-			chThdSleepMilliseconds(750);
+			if(etat_mobile==MOVE_ON)
+			{
+				left_motor_set_speed(0);
+				right_motor_set_speed(0);
+				chThdSleepMilliseconds(10);
+				left_motor_set_speed(1000);
+				right_motor_set_speed(1000);		// TOUT DROIT sur deux longueurs et demi de robot
+				chThdSleepMilliseconds(1000);
+				cligno=1;						//Allumer le cligno sur la led 2 et 4
+				left_motor_set_speed(1000);
+				right_motor_set_speed(1000);		// TOUT DROIT sur deux longueurs et demi de robot
+				chThdSleepMilliseconds(750);
 
 
-			left_motor_set_speed(0);
-			right_motor_set_speed(0);
-			chThdSleepMilliseconds(10);
-			left_motor_set_speed(1000);			// tourne à droite à nouveau
-			right_motor_set_speed(-1000);
-			chThdSleepMilliseconds(325);
+				left_motor_set_speed(0);
+				right_motor_set_speed(0);
+				chThdSleepMilliseconds(10);
+				left_motor_set_speed(1000);			// tourne à droite à nouveau
+				right_motor_set_speed(-1000);
+				chThdSleepMilliseconds(325);
 
 
-			left_motor_set_speed(0);
-			right_motor_set_speed(0);
-			chThdSleepMilliseconds(10);
-			left_motor_set_speed(1000);
-			right_motor_set_speed(1000);			// TOUT DROIT
-			chThdSleepMilliseconds(750);
+				left_motor_set_speed(0);
+				right_motor_set_speed(0);
+				chThdSleepMilliseconds(10);
+				left_motor_set_speed(1000);
+				right_motor_set_speed(1000);			// TOUT DROIT
+				chThdSleepMilliseconds(750);
 
-			left_motor_set_speed(0);
-			right_motor_set_speed(0);
-			chThdSleepMilliseconds(10);
-			left_motor_set_speed(-1000); 		// enfin, tourne à gauche pour se remettre droit
-			right_motor_set_speed(1000);
-			chThdSleepMilliseconds(325);
-			cligno=0;							// eteindre cigno droit
+				left_motor_set_speed(0);
+				right_motor_set_speed(0);
+				chThdSleepMilliseconds(10);
+				left_motor_set_speed(-1000); 		// enfin, tourne à gauche pour se remettre droit
+				right_motor_set_speed(1000);
+				chThdSleepMilliseconds(325);
+				cligno=0;							// eteindre cigno droit
+			}
 
-			mobile=1; 							// réactive la thread de déplacement
+			mobile=MOVE_ON;						// réactive la thread de déplacement
 
 		}
-
 		 //100Hz
 		 chThdSleepUntilWindowed(time, time + MS2ST(10));
 	}
@@ -238,11 +256,12 @@ static THD_FUNCTION(Deplacement, arg)
 
 	 float angle , angle_correction, dist_correction =0; // définition des variables locales
 	 float dist2, dist3, dist4 =0;
+	 int son;
 	while(1)
 	{
 		time = chVTGetSystemTime();
 
-		if(mobile==1)
+		if(mobile==MOVE_ON)
 		{
 			//Calcule les distances des capteurs IR2, 3 et 4 par rapport aux premiers obstacles
 			dist3 = convertisseur_value_dist(get_calibrated_prox(2));
@@ -269,9 +288,15 @@ static THD_FUNCTION(Deplacement, arg)
 
 		}
 
-		if(get_calibrated_prox(4)>= 500)
+		if(mobile==MOVE_START)
 		{
-			mobile=1;
+			son = return_signal();
+			while(son != 1)
+			{
+				son = return_signal();
+				chThdSleepMilliseconds(10);
+			}
+			mobile=MOVE_ON;
 		}
 
 

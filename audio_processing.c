@@ -60,7 +60,7 @@ void sound_remote(float* data)
 	}
 
 	//Sets signal =1
-	if(max_norm_index >= FREQ_20 && max_norm_index <= FREQ_26)
+	if(max_norm_index >= FREQ_22 && max_norm_index <= FREQ_26)
 	{
 		//chprintf((BaseSequentialStream *)&SDU1, "Son detecte\n");
 		signal=1;

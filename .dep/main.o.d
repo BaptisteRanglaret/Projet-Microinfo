@@ -144,8 +144,7 @@ build/obj/main.o: main.c \
  /Applications/Eclipse_e-puck2.app/Contents/Eclipse_e-puck2/Tools/gcc-arm-none-eabi-7-2017-q4-major/arm-none-eabi/include/sys/unistd.h \
  ../../lib/e-puck2_main-processor/src/parameter/parameter.h \
  ../../lib/e-puck2_main-processor/ChibiOS//os/hal/lib/streams/chprintf.h \
- pi_regulator.h process_image.h \
- ../../lib/e-puck2_main-processor/src/sensors/proximity.h \
+ pi_regulator.h ../../lib/e-puck2_main-processor/src/sensors/proximity.h \
  ../../lib/e-puck2_main-processor/src/audio/microphone.h \
  ../../lib/e-puck2_main-processor/src/audio/mp45dt02_processing.h \
  ../../lib/e-puck2_main-processor/src/leds.h \
@@ -450,8 +449,6 @@ main.h:
 ../../lib/e-puck2_main-processor/ChibiOS//os/hal/lib/streams/chprintf.h:
 
 pi_regulator.h:
-
-process_image.h:
 
 ../../lib/e-puck2_main-processor/src/sensors/proximity.h:
 
