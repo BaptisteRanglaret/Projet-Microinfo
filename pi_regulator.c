@@ -89,7 +89,7 @@ float convertisseur_value_dist(float value)
 	}
 	else
 	{
-		return 50;
+		return MAX_DISTANCE;
 	}
 }
 

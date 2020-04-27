@@ -22,7 +22,7 @@ extern "C" {
 #define GOAL_ANGLE				0.0f //angle cible de l'axe du robot p.r. au mur
 #define GOAL_DIST				20.0f
 #define DIST_CAPT				110.0f
-#define MAX_DISTANCE 			25.0f
+#define MAX_DISTANCE				50.0f
 #define ERROR_THRESHOLD			0.5f	// experimental value
 
 #define KP						10.0f

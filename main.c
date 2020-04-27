@@ -82,10 +82,6 @@ int main(void)
     //start the USB communication
     usb_start();
 
-    //starts the camera
-    //dcmi_start();
-	//po8030_start();
-
 	//inits the motors
 	motors_init();
 
@@ -107,6 +103,8 @@ int main(void)
     /* Infinite loop. */
     while (1)
     {
+    		//right_motor_set_speed(1000);
+    		//left_motor_set_speed(1000);
         chThdSleepMilliseconds(1000);
     }
 }

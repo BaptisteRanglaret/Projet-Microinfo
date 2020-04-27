@@ -188,7 +188,7 @@ float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 	}
 }
 
-int return_signal(void)
+int return_signal(void) 		// Fonction qui permet de renvoyer la valeur de signal dans d'autres fichiers
 {
 	return signal;
 }
