@@ -103,6 +103,8 @@ int main(void)
     /* Infinite loop. */
     while (1)
     {
+    		//chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 2 = %f\n", convertisseur_value_dist(get_calibrated_prox(1)));
+    		//chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 3 = %f\n", convertisseur_value_dist(get_calibrated_prox(2)));
     		//right_motor_set_speed(1000);
     		//left_motor_set_speed(1000);
         chThdSleepMilliseconds(1000);

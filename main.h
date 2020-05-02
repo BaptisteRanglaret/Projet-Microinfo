@@ -20,12 +20,12 @@ extern "C" {
 
 //PID pour la distance avec le mur
 #define GOAL_ANGLE				0.0f //angle cible de l'axe du robot p.r. au mur
-#define GOAL_DIST				20.0f
+#define GOAL_DIST				25.0f
 #define DIST_CAPT				110.0f
 #define MAX_DISTANCE				50.0f
 #define ERROR_THRESHOLD			0.5f	// experimental value
 
-#define KP						10.0f
+#define KP						20.0f 		//initiql 10.0F
 
 //#define KI 						0.005f	//must not be zero
 //#define KD						1.0f
@@ -37,6 +37,7 @@ extern "C" {
 #define MOVE_ON					1
 #define MOVE_OFF					0
 #define MOVE_MANOEUVRE			2
+#define EN_DEPASSEMENT			3
 #define MOVE_START				10
 
 /** Robot wide IPC bus. */
