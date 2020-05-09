@@ -1,17 +1,19 @@
 #ifndef PI_REGULATOR_H
 #define PI_REGULATOR_H
 
+#define CONST_EQ_DIST_1			2
+#define CONST_EQ_DIST_2			6
+#define CONST_EQ_DIST_3			120
+#define CONST_EQ_DIST_4			13760
 
-//Pi regulator function
-int16_t pi_regulator(float angle, float goal);
+
+//P regulator function
+int16_t p_regulator(float angle, float goal);
 
 //Declares the converter function
 float convertisseur_value_dist(float value);
 
 //Declares the angle computation function
 float calcul_angle (float dist2, float dist4);
-
-
-// float return_angle(void);
 
 #endif /* PI_REGULATOR_H */

@@ -14,13 +14,13 @@
 float calcul_angle (float dist2, float dist4);
 
 //simple P regulator implementation
-int16_t pi_regulator(float angle, float goal){
+int16_t p_regulator(float angle, float goal){
 
-	float error, speed_correction =OFF;
+	float error, speed_correction =0;
 
 	error = angle - goal;
 
-	/*disables the PI regulator if the error is to small, this avoids to always
+	/*disables the P regulator if the error is to small, this avoids to always
 	 * move as we cannot exactly be where we want and the sensors are a bit noisy
 	*/
 	if(fabs(error) < ERROR_THRESHOLD)
@@ -35,12 +35,12 @@ int16_t pi_regulator(float angle, float goal){
 
 float convertisseur_value_dist(float value)
 {
-	if (value>CAPT_TRESHOLD)
+	if (value>CAPT_TRESHOLD) //A partir d'une certaine valeur, on considère que le capteur est assez précis pour traiter son information
 	{
-		float distance=6*log((13760/(value-120))-2);
+		float distance=CONST_EQ_DIST_2*log((CONST_EQ_DIST_4/(value-CONST_EQ_DIST_3))-CONST_EQ_DIST_1);
 		return distance;
 	}
-	else
+	else //Si la valeur reçue est en dessous du threshold on renvoie une valeur normalisée
 	{
 		return MAX_DISTANCE;
 	}
@@ -50,21 +50,16 @@ float calcul_angle (float dist2, float dist4)
 {
 	float angle=0 ;
 
-	if(dist2==MAX_DISTANCE && dist4==MAX_DISTANCE)
+	if(dist2==MAX_DISTANCE && dist4==MAX_DISTANCE) //si les deux capteurs ne détecte aucun obstacle
 	{
 		return 0;
 	}
-	else
+	else // sinon effectue le calcul de l'angle
 	{
-		double alpha = asin(((dist4+DIST_CAPT_4)-(dist2+DIST_CAPT_2))/DIST_CAPT);
+		double alpha = asin(((dist4+DIST_CAPT_4)-(dist2+DIST_CAPT_2))/DIST_CAPT);  //Voi rapport
 
-		angle= (DEG_CONV/M_PI)*alpha;	// computes the angle of this vector to the wall in degrees
+		angle= (DEG_CONV/M_PI)*alpha;	// convertit l'angle de radians en degrés
 	}
 	return angle;  						// angle négatif si robot s'éloigne du mur
 }
-/*
-float return_angle()
-{
-	return angle;
-}
-*/
+

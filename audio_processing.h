@@ -30,6 +30,8 @@ void wait_send_to_computer(void);
 */
 float* get_audio_buffer_ptr(BUFFER_NAME_t name);
 
+
+//Fonction permettant de renvoyer un 1 ou un 0 aux threads dans mouvement pour controller des actions avec un son
 int return_signal(void);
 
 #endif /* AUDIO_PROCESSING_H */

@@ -31,12 +31,6 @@ messagebus_t bus;
 MUTEX_DECL(bus_lock);
 CONDVAR_DECL(bus_condvar);
 
-void SendUint8ToComputer(uint8_t* data, uint16_t size) 
-{
-	chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)"START", 5);
-	chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)&size, sizeof(uint16_t));
-	chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)data, size);
-}
 
 static void serial_start(void)
 {
@@ -57,36 +51,38 @@ int main(void)
     chSysInit();
     mpu_init();
 
-    //starts the serial communication
+    //Démarre la communication sériale
     serial_start();
 
-    //start the USB communication
+    //Démarre la communication USB
     usb_start();
 
-	//inits the motors
+	//Initialise les moteurs
 	motors_init();
 
-	//starts spi communication
+	//Démarre la communication spi nécessaire pour les LEDs RGB
 	spi_comm_start();
 
 	messagebus_init(&bus, &bus_lock, &bus_condvar);
 
-	//starts everything
+	//Initialise les capteurs IR
 	proximity_start();
+	//Démarre la thread pour les clignotants
 	clignotant_start();
+	//Démarre la thread pour le dépassement
 	depassement_start();
+	//Démarre la thread pour la manoeuvre
 	manoeuvre_start();
+	//Démarre la thread pour le déplacement
 	deplacement_start();
 
+	//Initialise le microphone
 	mic_start(&processAudioData);
 
 
     /* Infinite loop. */
     while (1)
     {
-    	 	//calcul_angle (convertisseur_value_dist(get_calibrated_prox(1)), convertisseur_value_dist(get_calibrated_prox(3)));
-    		//chprintf((BaseSequentialStream*)&SDU1, "Angle=%f\n", return_angle());
-    		//chprintf((BaseSequentialStream*)&SDU1, "Distance capt 2=%f\n", convertisseur_value_dist(get_calibrated_prox(1)));
         chThdSleepMilliseconds(1000);
     }
 }
