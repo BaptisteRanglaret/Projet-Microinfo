@@ -11,8 +11,13 @@
 #include <pi_regulator.h>
 #include <main.h>
 
-static int cligno=0;  			// variable globale pour transmettre l'état du clignotant entre les threads
-static int mobile=MOVE_START;	// variable globale pour activer/désactiver le mouvement en ligne droite de base en fonction des autres threads
+// variable globale pour transmettre l'état du clignotant entre les threads
+static int cligno=0;
+
+// variable globale pour activer/désactiver le mouvement de base en fonction des autres threads
+static int mobile=MOVE_START;
+
+// variable globale qui permet de transmettre le signal de la détection d'une place pour se garer
 static int compteur_place=0;
 
 
@@ -28,34 +33,49 @@ static THD_FUNCTION(Manoeuvre, arg)
 
 	systime_t time;
 	int son, gare=0;
+	int compteur=0;
+
 	bool en_cours=0;
 
 	while(1)
 	{
 		time = chVTGetSystemTime();
 
-		if((compteur_place>80 && mobile==MOVE_ON) || en_cours) // si il détecte une place et si il n'est pas en train de faire un autre manoeuvre
+		if((compteur_place>PLACE_DISPO && mobile==MOVE_ON) || en_cours) // si il détecte une place et si il n'est pas en train de faire un autre manoeuvre
 		{
 			if(en_cours==0)		//INSTRUCTIONS EFFECTUEES UNE SEULE FOIS AU DEBUT
 			{
-				cligno=1;		// Allumer le cligno sur les leds 2 et 4
+				cligno=CLIGNO_DROIT;		// Allumer le cligno sur les leds 2 et 4
 				mobile=MOVE_OFF; // désactive la thread de déplacement de base et interdit les autres manoeuvres
-				en_cours=1;
+				en_cours=ON;
+
+				left_motor_set_speed(1000);				// s'arrête si détecte une place
+				right_motor_set_speed(1000);
+
+				while (get_calibrated_prox(2)<200) //tant qu'il ne voit rien sur le capteur 3 avance le long de la place
+				{
+					compteur_place++;   //pour obtenir la taille de la place et pouvoir se garer précisément
+					chThdSleepMilliseconds(10);
+				}
 				left_motor_set_speed(0);				// s'arrête si détecte une place
 				right_motor_set_speed(0);
 			}
 
 			son = return_signal();
-			if(son && gare==0)			//Si il capte un son, commence sa manoeuvre
+			if(son && gare==OFF)			//Si il capte un son, commence sa manoeuvre
 			{
 				left_motor_set_speed(-1000);
 				right_motor_set_speed(-1000); // recule pour se mettre au niveau de la place
-				while (get_calibrated_prox(2)>=100) //tant qu'il voit quelque chose sur le capteur 3 avance le long de l'obstacle
+
+				while (compteur<(2*compteur_place/3))//tant qu'il n'est pas au milieu de la place
 				{
+					compteur++;
 					chThdSleepMilliseconds(10);
 				}
-				chThdSleepMilliseconds(125);
 
+				left_motor_set_speed(0);
+				right_motor_set_speed(0);
+				chThdSleepMilliseconds(500);
 				left_motor_set_speed(-1000); 		// quart de tour sur lui même
 				right_motor_set_speed(1000);
 				chThdSleepMilliseconds(325);
@@ -67,7 +87,7 @@ static THD_FUNCTION(Manoeuvre, arg)
 					chThdSleepMilliseconds(10);
 				}
 
-				cligno=0;							//eteindre les leds 2 et 4
+				cligno=OFF;							//eteindre les leds 2 et 4
 
 				left_motor_set_pos(0);
 				while(left_motor_get_pos()<= 325)
@@ -78,7 +98,7 @@ static THD_FUNCTION(Manoeuvre, arg)
 
 				left_motor_set_speed(0);
 				right_motor_set_speed(0);
-				gare=1;						// permet la suite de la manoeuvre sans refaire toute la manoeuvre
+				gare=ON;						// permet la suite de la manoeuvre sans refaire toute la manoeuvre
 			}
 
 			if(gare)  						//si il est autorisé à ressortir de sa place
@@ -87,8 +107,8 @@ static THD_FUNCTION(Manoeuvre, arg)
 				if(son)
 				{
 					mobile=MOVE_MANOEUVRE;
-					gare=0;
-					en_cours=0;
+					gare=OFF;
+					en_cours=OFF;
 					compteur_place=0;
 					left_motor_set_speed(1000);
 					right_motor_set_speed(1000);
@@ -99,7 +119,6 @@ static THD_FUNCTION(Manoeuvre, arg)
 		chThdSleepUntilWindowed(time, time+MS2ST(10));
 	}
 }
-
 
 static THD_WORKING_AREA(waClignotant, 128); //////// !!! TAILLE
 static THD_FUNCTION(Clignotant, arg)
@@ -113,7 +132,7 @@ static THD_FUNCTION(Clignotant, arg)
 	{
 		time = chVTGetSystemTime();
 
-		if(cligno==1) // cligno gauche activé
+		if(cligno==CLIGNO_DROIT) // cligno droit activé
 		{
 			set_rgb_led(LED6, 0,0,0);
 			set_rgb_led(LED8, 0,0,0);
@@ -125,7 +144,7 @@ static THD_FUNCTION(Clignotant, arg)
 			toggle_rgb_led(LED2,0, 255 );
 			toggle_rgb_led(LED2,1, 165 );
 		}
-		else if(cligno==2) // cligno droit activé
+		else if(cligno==CLIGNO_GAUCHE) // cligno gauche activé
 		{
 			set_rgb_led(LED2, 0,0,0);
 			set_rgb_led(LED4, 0,0,0);
@@ -174,7 +193,7 @@ static THD_FUNCTION(Depassement, arg)
 
 			left_motor_set_speed(0);
 			right_motor_set_speed(0);		//Arrete les deux moteurs
-			cligno=2; 						//Allumer cligno sur la led 6 et led 8
+			cligno=CLIGNO_GAUCHE; 			//Allumer cligno gauche
 			chThdSleepMilliseconds(1000);
 
 			left_motor_set_speed(-1000);			// tourne à gauche sur lui même
@@ -187,7 +206,7 @@ static THD_FUNCTION(Depassement, arg)
 
 			//debut mini_depassement
 			mobile=EN_DEPASSEMENT;
-			while (get_calibrated_prox(2)>=100) //tant qu'il voit quelque chose sur le capteur 3 avance le long de l'obstacle
+			while (get_calibrated_prox(2)>=100) //tant qu'il voit quelque chose sur le capteur 3 avance le long de l'obstacle avec correction
 			{
 				if (convertisseur_value_dist(get_calibrated_prox(1))==MAX_DISTANCE)
 				{
@@ -200,14 +219,6 @@ static THD_FUNCTION(Depassement, arg)
 			}
 
 			chThdSleepMilliseconds(125);
-			/*left_motor_set_pos(0);
-			while(left_motor_get_pos()<= 300)
-			{
-				left_motor_set_speed(1000); 		// continue un peu le dépassement à partir du moment où le capteur 3 ne capte plus rien
-				right_motor_set_speed(1000);
-			}*/
-
-
 			//fin mini_depassement
 
 			left_motor_set_speed(0);
@@ -216,7 +227,7 @@ static THD_FUNCTION(Depassement, arg)
 			left_motor_set_speed(1000);          // tourne à droite
 			right_motor_set_speed(-1000);
 			chThdSleepMilliseconds(325);
-			cligno=0;							//eteindre la led6 et 8
+			cligno=OFF;							//eteindre le cligno gauche
 
 			left_motor_set_speed(0);
 			right_motor_set_speed(0);
@@ -238,20 +249,13 @@ static THD_FUNCTION(Depassement, arg)
 				chThdSleepMilliseconds(10);
 			}
 
-			chThdSleepMilliseconds(125);
-
-			/*left_motor_set_pos(0);
-			while(left_motor_get_pos()<= 300)
-			{
-				left_motor_set_speed(1000);
-				right_motor_set_speed(1000);
-			}*/
+			chThdSleepMilliseconds(50);
 
 			// fin 2eme mini_depassement
 
 			if(etat_mobile==MOVE_ON)
 			{
-				cligno=1;						//Allumer le cligno sur la led 2 et 4
+				cligno=CLIGNO_DROIT;						//Allumer le cligno sur la led 2 et 4
 
 
 				left_motor_set_speed(0);
@@ -279,7 +283,7 @@ static THD_FUNCTION(Depassement, arg)
 				left_motor_set_speed(-1000); 		// enfin, tourne à gauche pour se remettre droit
 				right_motor_set_speed(1000);
 				chThdSleepMilliseconds(325);
-				cligno=0;							// eteindre cligno droit
+				cligno=OFF;							// eteindre cligno droit
 			}
 
 			mobile=MOVE_ON;						// réactive la thread de déplacement
@@ -298,9 +302,12 @@ static THD_FUNCTION(Deplacement, arg)
 
 	systime_t time;
 
-	 float angle , angle_correction, dist_correction =0; // définition des variables locales
-	 float dist2, dist3, dist4 =0;
-	 int son =0;
+	//float angle_reste=0;
+	//int temps_sleep=0;
+	float angle , angle_correction, dist_correction =0; // définition des variables locales
+	float dist2, dist3, dist4 =0;
+	int son =0;
+
 	while(1)
 	{
 		time = chVTGetSystemTime();
@@ -309,12 +316,10 @@ static THD_FUNCTION(Deplacement, arg)
 		{
 			//Calcule les distances des capteurs IR2, 3 et 4 par rapport aux premiers obstacles
 			dist3 = convertisseur_value_dist(get_calibrated_prox(2));
-			//chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 3 = %f\n",dist3);
 			dist2 = convertisseur_value_dist(get_calibrated_prox(1));
 
-			if(dist3 != MAX_DISTANCE && dist2 != MAX_DISTANCE ) //si les deux capteurs voient qqch
+			if((dist3 != MAX_DISTANCE && dist2 != MAX_DISTANCE) /*|| (mobile==EN_DEPASSEMENT)*/  ) //si les deux capteurs voient qqch ou en depassement où il est plus susceptible d'avoir des fortes variations d'angle à corriger
 			{
-				//dist2 = convertisseur_value_dist(get_calibrated_prox(1));
 				dist4 = convertisseur_value_dist(get_calibrated_prox(3));
 
 	        		angle = calcul_angle(dist2, dist4);		//Angle calculation
@@ -323,21 +328,60 @@ static THD_FUNCTION(Deplacement, arg)
 	        		angle_correction = pi_regulator(angle, GOAL_ANGLE);
 	        		dist_correction = dist3-GOAL_DIST;
 
-	        		//applies the speed from the PID regulator
-	        		right_motor_set_speed(SPEED - (10*dist_correction) + angle_correction); //initial SPEED - (*dist_correction) + angle_correction
+	        		//applies the speed from the P regulator
+	        		right_motor_set_speed(SPEED - (10*dist_correction) + angle_correction);
 	        		left_motor_set_speed(SPEED + (10*dist_correction) - angle_correction);
 
 	        		compteur_place=0;
+	        		//condition=0;
 			}
 			else
 			{
-				if(dist2 == MAX_DISTANCE)
+				if(dist2 == MAX_DISTANCE) // Si le capteur 2 ne capte plus rien, arrête la correction pour éviter qu'il se tourne vers la place libre
 				{
-					right_motor_set_speed(SPEED);
-					left_motor_set_speed(SPEED);
+					/*
+					angle_reste=return_angle();
+					if (condition == 0 && (angle_reste >1 || angle_reste<-1)) //pour qu'il ne le fasse su'une fois dès qu'il détecte un espace vide
+					{
+						left_motor_set_speed(0);				// s'arrête si détecte une place
+						right_motor_set_speed(0);
+						chThdSleepMilliseconds(1000);
+
+						//angle_reste=return_angle();
+						temps_sleep=(10*angle_reste);
+						//chprintf((BaseSequentialStream*)&SDU1, "angle_reste =%f\n", angle_reste);
+						//chprintf((BaseSequentialStream*)&SDU1, "temps_sleep =%d\n", temps_sleep);
+						if(angle_reste<0)
+						{
+							left_motor_set_pos(0);
+							while(left_motor_get_pos()<=(temps_sleep))
+							{
+								left_motor_set_speed(-1000);				// s'arrête si détecte une place
+								right_motor_set_speed(1000);
+							}
+						}
+						if(angle_reste>0)
+						{
+							left_motor_set_pos(0);
+							while(left_motor_get_pos()>=(-temps_sleep))
+							{
+								left_motor_set_speed(1000);				// s'arrête si détecte une place
+								right_motor_set_speed(-1000);
+							}
+						}
+						condition=1;
+
+					}
+
+					*/
+					//right_motor_set_speed(SPEED+25);
+					//left_motor_set_speed(SPEED-25);
+					//chThdSleepMilliseconds(25);
+					right_motor_set_speed(1000);
+					left_motor_set_speed(1000);
 				}
 
-				if (dist3 == MAX_DISTANCE)
+				if (dist3 == MAX_DISTANCE)// Si le capteur 3 ne renvoie plus rien, regarde si il a la place de se garer
 				{
 					compteur_place++;
 				}
@@ -346,7 +390,7 @@ static THD_FUNCTION(Deplacement, arg)
 
 		}
 
-		if(mobile==MOVE_START)
+		if(mobile==MOVE_START) // Si nous sommes au début du programme, attend un son pour démarrer
 		{
 			son = return_signal();
 			if(son)

@@ -50,31 +50,12 @@ static void serial_start(void)
 	sdStart(&SD3, &ser_cfg); // UART3.
 }
 
-/*static void timer12_start(void)
-{
-    //General Purpose Timer configuration
-    //timer 12 is a 16 bit timer so we can measure time
-    //to about 65ms with a 1Mhz counter
-    static const GPTConfig gpt12cfg =
-    {
-        1000000,        // 1MHz timer clock in order to measure uS.
-        NULL,           // Timer callback.
-        0,
-        0
-    };
-
-    gptStart(&GPTD12, &gpt12cfg);
-    //let the timer count to max value
-    gptStartContinuous(&GPTD12, 0xFFFF);
-}*/
 
 int main(void)
 {
-
     halInit();
     chSysInit();
     mpu_init();
-    //timer12_start();
 
     //starts the serial communication
     serial_start();
@@ -103,10 +84,9 @@ int main(void)
     /* Infinite loop. */
     while (1)
     {
-    		//chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 2 = %f\n", convertisseur_value_dist(get_calibrated_prox(1)));
-    		//chprintf((BaseSequentialStream *)&SDU1, "DISTANCE capteur 3 = %f\n", convertisseur_value_dist(get_calibrated_prox(2)));
-    		//right_motor_set_speed(1000);
-    		//left_motor_set_speed(1000);
+    	 	//calcul_angle (convertisseur_value_dist(get_calibrated_prox(1)), convertisseur_value_dist(get_calibrated_prox(3)));
+    		//chprintf((BaseSequentialStream*)&SDU1, "Angle=%f\n", return_angle());
+    		//chprintf((BaseSequentialStream*)&SDU1, "Distance capt 2=%f\n", convertisseur_value_dist(get_calibrated_prox(1)));
         chThdSleepMilliseconds(1000);
     }
 }

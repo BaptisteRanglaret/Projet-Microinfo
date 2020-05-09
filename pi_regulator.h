@@ -11,4 +11,7 @@ float convertisseur_value_dist(float value);
 //Declares the angle computation function
 float calcul_angle (float dist2, float dist4);
 
+
+// float return_angle(void);
+
 #endif /* PI_REGULATOR_H */
